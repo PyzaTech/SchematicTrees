@@ -1,0 +1,43 @@
+# SlimeSchematics (https://PyzaTech.com)
+# Requires WorldEdit (or FastAsyncWorldEdit) on the server for .schem paste and clipboard save.
+
+settings:
+  # Empty list means every world is allowed.
+  enabled-worlds: []
+  replace-natural-growth: true
+  replace-bone-meal-growth: true
+  # When true, one of yaw-choices-degrees is picked at random before each paste.
+  random-yaw: true
+  yaw-choices-degrees:
+    - 0
+    - 90
+    - 180
+    - 270
+  # Extra offset applied after aligning the schematic origin to the sapling block (integers).
+  paste-offset:
+    x: 0
+    y: 0
+    z: 0
+  # If set (Bukkit Material name), after a successful paste the anchor block is set to this when it is still air
+  # (AIR, CAVE_AIR, VOID_AIR). Use when //copy was done with a hole at the trunk; better is //toggleplace and
+  # copy with the log still there. Example: OAK_LOG, SPRUCE_LOG, MANGROVE_ROOTS
+  fill-anchor-if-air: ""
+  debug-messages: false
+
+# Map Bukkit TreeType name (uppercase) to one schematic id or a list (random pick each growth).
+# Files live at plugins/SlimeSchematics/trees/<id>.schem
+# Unmapped TreeTypes keep vanilla growth.
+#
+# There is no TreeType named OAK. Vanilla oak saplings use shapes such as TREE, BIG_TREE, SWAMP.
+# Use the same list on each, or in-game: /sst setoak id1 id2
+#
+# Spruce is not named SPRUCE in Bukkit. Saplings use REDWOOD, TALL_REDWOOD, MEGA_REDWOOD.
+# In-game: /sst setspruce id1 id2
+#
+# Single schematic:
+#   TREE: my_oak_only
+# Random pool (one picked per growth, plus random yaw if enabled above):
+#   BIRCH:
+#     - birch_a
+#     - birch_b
+trees: {}
