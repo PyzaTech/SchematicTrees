@@ -1,4 +1,4 @@
-# SlimeSchematics (https://PyzaTech.com)
+# SchematicTrees (https://PyzaTech.com)
 # Requires WorldEdit (or FastAsyncWorldEdit) on the server for .schem paste and clipboard save.
 
 settings:
@@ -6,6 +6,10 @@ settings:
   enabled-worlds: []
   replace-natural-growth: true
   replace-bone-meal-growth: true
+  # When true, schematic blocks are not written where the world already has blocks we keep (XSeries mask per cell).
+  # Pastes use Bukkit setBlockData so FastAsyncWorldEdit cannot skip a custom WorldEdit extent (which is why mask debug was empty before).
+  # Preferred key: preserve-existing-blocks-on-paste. Legacy alias: preserve-solid-terrain (used only if the line below is absent).
+  preserve-existing-blocks-on-paste: false
   # When true, one of yaw-choices-degrees is picked at random before each paste.
   random-yaw: true
   yaw-choices-degrees:
@@ -22,17 +26,19 @@ settings:
   # (AIR, CAVE_AIR, VOID_AIR). Use when //copy was done with a hole at the trunk; better is //toggleplace and
   # copy with the log still there. Example: OAK_LOG, SPRUCE_LOG, MANGROVE_ROOTS
   fill-anchor-if-air: ""
+  # When true, logs extra plugin info. With preserve-existing-blocks-on-paste on, also logs each mask decision during paste
+  # (coordinates, material, block data, PASTE vs SKIP, reason) up to a cap per paste. When debug is on you always get one line per paste with the preserve flag.
   debug-messages: false
 
 # Map Bukkit TreeType name (uppercase) to one schematic id or a list (random pick each growth).
-# Files live at plugins/SlimeSchematics/trees/<id>.schem
+# Files live at plugins/SchematicTrees/trees/<id>.schem
 # Unmapped TreeTypes keep vanilla growth.
 #
 # There is no TreeType named OAK. Vanilla oak saplings use shapes such as TREE, BIG_TREE, SWAMP.
-# Use the same list on each, or in-game: /sst setoak id1 id2
+# Use the same list on each, or in-game: /schtrees setoak id1 id2 (or /schematictrees ... or /st ...)
 #
 # Spruce is not named SPRUCE in Bukkit. Saplings use REDWOOD, TALL_REDWOOD, MEGA_REDWOOD.
-# In-game: /sst setspruce id1 id2
+# In-game: /schtrees setspruce id1 id2
 #
 # Single schematic:
 #   TREE: my_oak_only

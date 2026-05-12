@@ -1,9 +1,9 @@
-package com.pyzatech.slimeschematics.listener;
+package com.pyzatech.schematictrees.listener;
 
-import com.pyzatech.slimeschematics.SlimeSchematicsPlugin;
-import com.pyzatech.slimeschematics.config.PluginSettings;
-import com.pyzatech.slimeschematics.schematic.SchematicService;
-import com.pyzatech.slimeschematics.worldedit.WorldEditBridge;
+import com.pyzatech.schematictrees.SchematicTreesPlugin;
+import com.pyzatech.schematictrees.config.PluginSettings;
+import com.pyzatech.schematictrees.schematic.SchematicService;
+import com.pyzatech.schematictrees.worldedit.WorldEditBridge;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import java.util.List;
 import java.util.Optional;
@@ -20,11 +20,11 @@ import org.bukkit.event.world.StructureGrowEvent;
 
 public final class TreeGrowListener implements Listener {
 
-    private final SlimeSchematicsPlugin plugin;
+    private final SchematicTreesPlugin plugin;
     private final PluginSettings settings;
     private final SchematicService schematics;
 
-    public TreeGrowListener(SlimeSchematicsPlugin plugin, PluginSettings settings, SchematicService schematics) {
+    public TreeGrowListener(SchematicTreesPlugin plugin, PluginSettings settings, SchematicService schematics) {
         this.plugin = plugin;
         this.settings = settings;
         this.schematics = schematics;
@@ -78,7 +78,13 @@ public final class TreeGrowListener implements Listener {
 
         int yaw = pickYawDegrees();
         try {
-            schematics.paste(event.getWorld(), origin, clipboard.get(), yaw);
+            schematics.paste(
+                    event.getWorld(),
+                    origin,
+                    clipboard.get(),
+                    yaw,
+                    settings.preserveExistingBlocksOnPaste(),
+                    settings.debugMessages());
             maybeFillAirAnchor(origin);
         } catch (Exception ex) {
             plugin.getLogger().warning("Failed to paste schematic '" + schematicId + "': " + ex.getMessage());

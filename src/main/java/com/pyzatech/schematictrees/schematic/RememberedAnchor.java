@@ -1,10 +1,10 @@
-package com.pyzatech.slimeschematics.schematic;
+package com.pyzatech.schematictrees.schematic;
 
 import java.util.Objects;
 
 /**
- * Block and world position captured before {@code /sst save} so the clipboard can be patched and
- * its paste origin set to that block (the sapling / trunk base you looked at when running {@code /sst remember-anchor}).
+ * Block and world position captured before {@code /schematictrees save} so the clipboard can be patched and
+ * its paste origin set to that block (the sapling / trunk base you looked at when running {@code /schematictrees remember-anchor}).
  */
 public final class RememberedAnchor {
 

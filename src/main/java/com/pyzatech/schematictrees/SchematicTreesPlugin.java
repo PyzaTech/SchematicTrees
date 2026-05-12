@@ -1,18 +1,18 @@
-package com.pyzatech.slimeschematics;
+package com.pyzatech.schematictrees;
 
-import com.pyzatech.slimeschematics.command.SlimeSchematicsCommand;
-import com.pyzatech.slimeschematics.config.PluginSettings;
-import com.pyzatech.slimeschematics.listener.TreeGrowListener;
-import com.pyzatech.slimeschematics.schematic.RememberedAnchor;
-import com.pyzatech.slimeschematics.schematic.SchematicService;
-import com.pyzatech.slimeschematics.worldedit.WorldEditBridge;
+import com.pyzatech.schematictrees.command.SchematicTreesCommand;
+import com.pyzatech.schematictrees.config.PluginSettings;
+import com.pyzatech.schematictrees.listener.TreeGrowListener;
+import com.pyzatech.schematictrees.schematic.RememberedAnchor;
+import com.pyzatech.schematictrees.schematic.SchematicService;
+import com.pyzatech.schematictrees.worldedit.WorldEditBridge;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class SlimeSchematicsPlugin extends JavaPlugin {
+public final class SchematicTreesPlugin extends JavaPlugin {
 
     private PluginSettings settings;
     private SchematicService schematicService;
@@ -34,9 +34,9 @@ public final class SlimeSchematicsPlugin extends JavaPlugin {
                     "WorldEdit (or FastAsyncWorldEdit) was not detected. Schematic pasting will stay disabled until it is installed.");
         }
         getServer().getPluginManager().registerEvents(new TreeGrowListener(this, settings, schematicService), this);
-        org.bukkit.command.PluginCommand command = getCommand("slimeschematics");
+        org.bukkit.command.PluginCommand command = getCommand("schematictrees");
         if (command != null) {
-            SlimeSchematicsCommand executor = new SlimeSchematicsCommand(settings, schematicService, this);
+            SchematicTreesCommand executor = new SchematicTreesCommand(settings, schematicService, this);
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         }

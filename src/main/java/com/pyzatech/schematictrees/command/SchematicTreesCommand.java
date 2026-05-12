@@ -1,11 +1,11 @@
-package com.pyzatech.slimeschematics.command;
+package com.pyzatech.schematictrees.command;
 
-import com.pyzatech.slimeschematics.SlimeSchematicsPlugin;
-import com.pyzatech.slimeschematics.config.PluginSettings;
-import com.pyzatech.slimeschematics.schematic.AnchorCapture;
-import com.pyzatech.slimeschematics.schematic.RememberedAnchor;
-import com.pyzatech.slimeschematics.schematic.SchematicService;
-import com.pyzatech.slimeschematics.worldedit.WorldEditBridge;
+import com.pyzatech.schematictrees.SchematicTreesPlugin;
+import com.pyzatech.schematictrees.config.PluginSettings;
+import com.pyzatech.schematictrees.schematic.AnchorCapture;
+import com.pyzatech.schematictrees.schematic.RememberedAnchor;
+import com.pyzatech.schematictrees.schematic.SchematicService;
+import com.pyzatech.schematictrees.worldedit.WorldEditBridge;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,13 +21,13 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-public final class SlimeSchematicsCommand implements CommandExecutor, TabCompleter {
+public final class SchematicTreesCommand implements CommandExecutor, TabCompleter {
 
     private final PluginSettings settings;
     private final SchematicService schematics;
-    private final SlimeSchematicsPlugin plugin;
+    private final SchematicTreesPlugin plugin;
 
-    public SlimeSchematicsCommand(PluginSettings settings, SchematicService schematics, SlimeSchematicsPlugin plugin) {
+    public SchematicTreesCommand(PluginSettings settings, SchematicService schematics, SchematicTreesPlugin plugin) {
         this.settings = settings;
         this.schematics = schematics;
         this.plugin = plugin;
@@ -35,7 +35,7 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("slimeschematics.admin")) {
+        if (!hasSchematicTreesAdmin(sender)) {
             sender.sendMessage(ChatColor.RED + "You do not have permission.");
             return true;
         }
@@ -49,7 +49,7 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
         if ("reload".equals(sub)) {
             settings.reloadFromDisk();
             schematics.clearCache();
-            sender.sendMessage(ChatColor.GREEN + "Reloaded SlimeSchematics config and schematic cache.");
+            sender.sendMessage(ChatColor.GREEN + "Reloaded SchematicTrees config and schematic cache.");
             return true;
         }
         if ("status".equals(sub)) {
@@ -80,7 +80,7 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
             TreeType type = parseTreeType(args[1]);
             if (type == null) {
                 sender.sendMessage(ChatColor.RED + "Unknown TreeType: " + args[1]);
-                maybeSpruceHint(sender, args[1]);
+                maybeSpruceHint(sender, args[1], label);
                 return true;
             }
             List<String> ids = Arrays.asList(Arrays.copyOfRange(args, 2, args.length));
@@ -131,7 +131,7 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
             TreeType type = parseTreeType(args[1]);
             if (type == null) {
                 sender.sendMessage(ChatColor.RED + "Unknown TreeType: " + args[1]);
-                maybeSpruceHint(sender, args[1]);
+                maybeSpruceHint(sender, args[1], label);
                 return true;
             }
             settings.clearMapping(type);
@@ -201,7 +201,7 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
     }
 
     private static void sendHelp(CommandSender sender, String label) {
-        sender.sendMessage(ChatColor.GOLD + "SlimeSchematics commands");
+        sender.sendMessage(ChatColor.GOLD + "SchematicTrees commands");
         sender.sendMessage(ChatColor.GRAY + "/" + label + " reload");
         sender.sendMessage(ChatColor.GRAY + "/" + label + " status");
         sender.sendMessage(ChatColor.GRAY + "/" + label + " list");
@@ -214,6 +214,12 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
         sender.sendMessage(ChatColor.GRAY + "/" + label + " remember-anchor (look at sapling block, then //copy, then save)");
         sender.sendMessage(ChatColor.GRAY + "/" + label + " forget-anchor");
         sender.sendMessage(ChatColor.GRAY + "/" + label + " save <schematicId> (needs //copy)");
+    }
+
+    private static boolean hasSchematicTreesAdmin(CommandSender sender) {
+        return sender.hasPermission("schematictrees.admin")
+                // Legacy permission string (e.g. old LuckPerms groups) still honored if present.
+                || sender.hasPermission("slimeschematics.admin");
     }
 
     private static boolean equalsAnyIgnoreCase(String value, String... options) {
@@ -236,18 +242,19 @@ public final class SlimeSchematicsCommand implements CommandExecutor, TabComplet
         }
     }
 
-    private static void maybeSpruceHint(CommandSender sender, String attempted) {
+    private static void maybeSpruceHint(CommandSender sender, String attempted, String label) {
         if (attempted == null) {
             return;
         }
         if ("SPRUCE".equals(attempted.trim().toUpperCase(Locale.ROOT))) {
-            sender.sendMessage(ChatColor.GRAY + "There is no TreeType SPRUCE. Use REDWOOD, TALL_REDWOOD, MEGA_REDWOOD, or /sst setspruce <id>.");
+            sender.sendMessage(ChatColor.GRAY + "There is no TreeType SPRUCE. Use REDWOOD, TALL_REDWOOD, MEGA_REDWOOD, or /"
+                    + label + " setspruce <id>.");
         }
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("slimeschematics.admin")) {
+        if (!hasSchematicTreesAdmin(sender)) {
             return Collections.emptyList();
         }
         if (args.length == 1) {

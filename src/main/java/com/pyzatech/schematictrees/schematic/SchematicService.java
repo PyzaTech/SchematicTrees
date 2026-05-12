@@ -1,8 +1,9 @@
-package com.pyzatech.slimeschematics.schematic;
+package com.pyzatech.schematictrees.schematic;
 
-import com.pyzatech.slimeschematics.SlimeSchematicsPlugin;
+import com.pyzatech.schematictrees.SchematicTreesPlugin;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
@@ -13,8 +14,12 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
+import com.sk89q.worldedit.math.transform.Transform;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
+import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.extent.transform.BlockTransformExtent;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,17 +40,20 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 
 public final class SchematicService {
 
-    private final SlimeSchematicsPlugin plugin;
+    private final SchematicTreesPlugin plugin;
     private final Path treesFolder;
     private final Map<String, Clipboard> cache = new ConcurrentHashMap<>();
     /** Last-modified millis of the file backing each cached clipboard (invalidates cache when the file changes on disk). */
     private final Map<String, Long> cacheFileMtimeMillis = new ConcurrentHashMap<>();
 
-    public SchematicService(SlimeSchematicsPlugin plugin) {
+    public SchematicService(SchematicTreesPlugin plugin) {
         this.plugin = plugin;
         this.treesFolder = plugin.getDataFolder().toPath().resolve("trees");
     }
@@ -153,10 +161,10 @@ public final class SchematicService {
         String base = "Could not read schematic: " + file + " (" + last.getMessage() + ")";
         if (isTruncatedOrCorruptGzip(last)) {
             return base
-                    + " The file looks truncated or corrupt (unfinished save, bad copy, or an older SlimeSchematics build that did not close the schematic writer)."
-                    + " Delete plugins/SlimeSchematics/trees/"
+                    + " The file looks truncated or corrupt (unfinished save, bad copy, or an older SchematicTrees build that did not close the schematic writer)."
+                    + " Delete plugins/SchematicTrees/trees/"
                     + file.getFileName()
-                    + " then run //copy and /sst save <id> again (or paste a valid .schem from //schem save).";
+                    + " then run //copy and /schematictrees save <id> again (or paste a valid .schem from //schem save).";
         }
         return base;
     }
@@ -242,7 +250,7 @@ public final class SchematicService {
     }
 
     /**
-     * Sponge schematic format used for {@code /sst save}. Prefers v3 when the runtime WorldEdit enum has it.
+     * Sponge schematic format used for {@code /schematictrees save}. Prefers v3 when the runtime WorldEdit enum has it.
      */
     private static BuiltInClipboardFormat spongeSaveFormat() {
         for (String name : new String[] {"SPONGE_V3_SCHEMATIC", "SPONGE_V2_SCHEMATIC", "SPONGE_SCHEMATIC"}) {
@@ -270,9 +278,10 @@ public final class SchematicService {
             org.bukkit.World bukkitWorld,
             Location pasteOrigin,
             Clipboard clipboard,
-            int yawDegrees
+            int yawDegrees,
+            boolean preserveExistingBlocksOnPaste,
+            boolean debugPasteMask
     ) throws Exception {
-        World weWorld = BukkitAdapter.adapt(bukkitWorld);
         BlockVector3 to = BlockVector3.at(
                 pasteOrigin.getBlockX(),
                 pasteOrigin.getBlockY(),
@@ -282,10 +291,63 @@ public final class SchematicService {
         ClipboardHolder holder = new ClipboardHolder(clipboard);
         holder.setTransform(new AffineTransform().rotateY(yawDegrees));
 
+        Logger log = plugin.getLogger();
+        if (debugPasteMask) {
+            log.info("[SchematicTrees paste] debug on: preserveExistingBlocksOnPaste=" + preserveExistingBlocksOnPaste
+                    + " origin=" + pasteOrigin.getBlockX() + "," + pasteOrigin.getBlockY() + "," + pasteOrigin.getBlockZ()
+                    + " blockType=" + pasteOrigin.getBlock().getType()
+                    + (preserveExistingBlocksOnPaste
+                    ? " (Bukkit per-block apply + mask; FAWE cannot skip this path)"
+                    : " (WorldEdit EditSession paste)"));
+        }
+
+        if (preserveExistingBlocksOnPaste) {
+            pasteClipboardPreserveWithBukkit(bukkitWorld, holder, clipboard, to, debugPasteMask, log);
+            return;
+        }
+
+        World weWorld = BukkitAdapter.adapt(bukkitWorld);
         try (EditSession editSession =
                 WorldEdit.getInstance().getEditSessionFactory().getEditSession(weWorld, -1)) {
             Operations.complete(
                     holder.createPaste(editSession).to(to).ignoreAirBlocks(false).build());
+        }
+    }
+
+    /**
+     * Same placement math as WorldEdit's paste, but applies with Bukkit so FastAsyncWorldEdit cannot bypass a custom
+     * {@link com.sk89q.worldedit.extent.Extent}. Each destination cell runs {@link SolidTerrainPreserveMask} first.
+     */
+    private void pasteClipboardPreserveWithBukkit(
+            org.bukkit.World bukkitWorld,
+            ClipboardHolder holder,
+            Clipboard clipboard,
+            BlockVector3 to,
+            boolean debugPasteMask,
+            Logger log
+    ) throws WorldEditException {
+        Transform transform = holder.getTransform();
+        BlockTransformExtent transformedClipboard = new BlockTransformExtent(clipboard, transform);
+        Region region = clipboard.getRegion();
+        BlockVector3 from = clipboard.getOrigin();
+        SolidTerrainPreserveMask mask = new SolidTerrainPreserveMask(bukkitWorld, debugPasteMask, log);
+
+        for (BlockVector3 position : region) {
+            BaseBlock block = transformedClipboard.getFullBlock(position);
+            BlockVector3 relative = position.subtract(from);
+            BlockVector3 transformed = transform.apply(relative.toVector3()).toBlockPoint();
+            BlockVector3 worldVec = transformed.add(to);
+
+            if (!mask.test(worldVec)) {
+                continue;
+            }
+
+            Block bukkitBlock = bukkitWorld.getBlockAt(
+                    worldVec.getBlockX(),
+                    worldVec.getBlockY(),
+                    worldVec.getBlockZ());
+            BlockData data = BukkitAdapter.adapt(block);
+            bukkitBlock.setBlockData(data, false);
         }
     }
 

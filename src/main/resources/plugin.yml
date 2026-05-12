@@ -1,5 +1,5 @@
-name: SlimeSchematics
-main: com.pyzatech.slimeschematics.SlimeSchematicsPlugin
+name: SchematicTrees
+main: com.pyzatech.schematictrees.SchematicTreesPlugin
 version: ${project.version}
 api-version: "1.13"
 authors: [ PyzaTech ]
@@ -8,12 +8,12 @@ description: Replaces sapling tree growth with configurable WorldEdit schematics
 softdepend: [ WorldEdit, FastAsyncWorldEdit ]
 
 commands:
-  slimeschematics:
-    description: SlimeSchematics admin commands
+  schematictrees:
+    description: SchematicTrees admin commands
     usage: /<command> help
-    aliases: [ sst, slimeschem ]
+    aliases: [ st, schtrees ]
 
 permissions:
-  slimeschematics.admin:
+  schematictrees.admin:
     description: Setup and manage schematic trees
     default: op

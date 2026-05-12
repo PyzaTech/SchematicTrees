@@ -1,4 +1,4 @@
-package com.pyzatech.slimeschematics.worldedit;
+package com.pyzatech.schematictrees.worldedit;
 
 import com.sk89q.worldedit.WorldEdit;
 import org.bukkit.Bukkit;

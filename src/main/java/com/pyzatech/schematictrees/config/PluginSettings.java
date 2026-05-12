@@ -1,6 +1,6 @@
-package com.pyzatech.slimeschematics.config;
+package com.pyzatech.schematictrees.config;
 
-import com.pyzatech.slimeschematics.SlimeSchematicsPlugin;
+import com.pyzatech.schematictrees.SchematicTreesPlugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,7 +18,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public final class PluginSettings {
 
-    private final SlimeSchematicsPlugin plugin;
+    private final SchematicTreesPlugin plugin;
 
     private Set<String> enabledWorldsLower = Collections.emptySet();
     private boolean replaceNaturalGrowth = true;
@@ -29,11 +29,16 @@ public final class PluginSettings {
     private int pasteOffsetY;
     private int pasteOffsetZ;
     private boolean debugMessages;
+    /**
+     * When true, pasted schematics skip cells where the world already has blocks we should keep (WorldEdit mask + XSeries).
+     * Read from {@code settings.preserve-existing-blocks-on-paste}, or if unset from legacy {@code settings.preserve-solid-terrain}.
+     */
+    private boolean preserveExistingBlocksOnPaste;
     /** When set, after a successful paste the anchor block is set to this if it is still air (fixes schematics saved with a temporary hole at the trunk). */
     private Material fillAnchorIfAir;
     private final Map<String, List<String>> treeTypeToSchematicIds = new HashMap<>();
 
-    public PluginSettings(SlimeSchematicsPlugin plugin) {
+    public PluginSettings(SchematicTreesPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -66,6 +71,11 @@ public final class PluginSettings {
         this.pasteOffsetY = cfg.getInt("settings.paste-offset.y", 0);
         this.pasteOffsetZ = cfg.getInt("settings.paste-offset.z", 0);
         this.debugMessages = cfg.getBoolean("settings.debug-messages", false);
+        if (cfg.isSet("settings.preserve-existing-blocks-on-paste")) {
+            this.preserveExistingBlocksOnPaste = cfg.getBoolean("settings.preserve-existing-blocks-on-paste");
+        } else {
+            this.preserveExistingBlocksOnPaste = cfg.getBoolean("settings.preserve-solid-terrain", false);
+        }
 
         this.fillAnchorIfAir = null;
         String fillAnchorRaw = cfg.getString("settings.fill-anchor-if-air");
@@ -157,6 +167,16 @@ public final class PluginSettings {
 
     public boolean debugMessages() {
         return debugMessages;
+    }
+
+    public boolean preserveExistingBlocksOnPaste() {
+        return preserveExistingBlocksOnPaste;
+    }
+
+    /** @deprecated use {@link #preserveExistingBlocksOnPaste()} */
+    @Deprecated
+    public boolean preserveSolidTerrain() {
+        return preserveExistingBlocksOnPaste;
     }
 
     /**

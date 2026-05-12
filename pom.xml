@@ -5,10 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.pyzatech</groupId>
-    <artifactId>SlimeSchematics</artifactId>
-    <version>1.0.0</version>
+    <artifactId>SchematicTrees</artifactId>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
-    <name>SlimeSchematics</name>
+    <name>SchematicTrees</name>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -41,6 +49,12 @@
             <version>7.2.9</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Cross-version block/material checks (replaces unreliable Material.isSolid() on newer Paper). Shaded into our jar. -->
+        <dependency>
+            <groupId>com.github.cryptomorin</groupId>
+            <artifactId>XSeries</artifactId>
+            <version>11.3.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -70,6 +84,27 @@
                         </manifestEntries>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.github.cryptomorin:XSeries</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

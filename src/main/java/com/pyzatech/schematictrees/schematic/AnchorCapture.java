@@ -1,4 +1,4 @@
-package com.pyzatech.slimeschematics.schematic;
+package com.pyzatech.schematictrees.schematic;
 
 import java.io.IOException;
 import org.bukkit.block.Block;
@@ -10,7 +10,7 @@ public final class AnchorCapture {
     }
 
     /**
-     * Remembers the solid block the player is looking at (sapling / trunk base). Used as paste origin on {@code /sst save}.
+     * Remembers the solid block the player is looking at (sapling / trunk base). Used as paste origin on {@code /schematictrees save}.
      */
     public static RememberedAnchor captureLookTarget(Player player) throws IOException {
         return fromLook(player);
